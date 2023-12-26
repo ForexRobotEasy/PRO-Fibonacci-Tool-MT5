@@ -1,0 +1,126 @@
+
+//+------------------------------------------------------------------+
+//|                                           PRO Fibonacci Tool MT5 |
+//|                                      https://www.forexroboteasy.com |
+//|                                           Developed by Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <ChartObjects\ChartObjectsFibo.mqh>
+#include <HotKeys\HotKeys.mqh>
+
+// Define constants
+const int MAX_LEVELS = 10; // Maximum number of Fibonacci levels
+
+// Define global variables
+CTrade trade; // Trade object
+
+//+------------------------------------------------------------------+
+//|                        Custom Fibonacci Tool                      |
+//+------------------------------------------------------------------+
+class CFibonacciTool
+{
+private:
+   CChartObjectFibo fiboLevels[MAX_LEVELS]; // Array to store Fibonacci levels
+   int currentLevel; // Current number of Fibonacci levels
+
+public:
+   // Constructor
+   CFibonacciTool()
+   {
+      currentLevel = 0; // Initialize current level to 0
+   }
+
+   // Function to draw Fibonacci retracement and expansion levels
+   void DrawLevels()
+   {
+      // Get chart properties
+      double priceMin = ChartGetDouble(ChartID(), CHART_PRICE_MIN);
+      double priceMax = ChartGetDouble(ChartID(), CHART_PRICE_MAX);
+      datetime timeMin = ChartGetInteger(ChartID(), CHART_FIRST_VISIBLE_BAR);
+      datetime timeMax = ChartGetInteger(ChartID(), CHART_LAST_VISIBLE_BAR);
+
+      // Calculate Fibonacci levels
+      double levelMin = priceMin + (priceMax - priceMin) * 0.382;
+      double levelMax = priceMax + (priceMax - priceMin) * 1.618;
+
+      // Draw Fibonacci levels
+      fiboLevels[currentLevel].Create(0, timeMin, levelMin, timeMax, levelMax);
+      fiboLevels[currentLevel].Color = clrRed;
+      fiboLevels[currentLevel].Redraw();
+      
+      currentLevel++; // Increment current level
+   }
+
+   // Function to edit a specific Fibonacci level
+   void EditLevel(int levelIndex, double newLevel)
+   {
+      if (levelIndex >= 0 && levelIndex < currentLevel)
+      {
+         fiboLevels[levelIndex].Level = newLevel;
+         fiboLevels[levelIndex].Redraw();
+      }
+   }
+
+   // Function to remove a specific Fibonacci level
+   void RemoveLevel(int levelIndex)
+   {
+      if (levelIndex >= 0 && levelIndex < currentLevel)
+      {
+         fiboLevels[levelIndex].Delete();
+         for (int i = levelIndex; i < currentLevel - 1; i++)
+         {
+            fiboLevels[i] = fiboLevels[i + 1];
+         }
+         currentLevel--;
+      }
+   }
+};
+
+CFibonacciTool fibonacciTool; // Fibonacci tool object
+
+//+------------------------------------------------------------------+
+//|                      Initialization Function                      |
+//+------------------------------------------------------------------+
+void OnInit()
+{
+   // Enable hotkeys for drawing Fibonacci levels
+   CHotKeys::Set('Fibonacci Levels', 'DrawLevels()');
+
+   // Initialize trade object
+   trade.SetExpertMagicNumber(123456);
+}
+
+//+------------------------------------------------------------------+
+//|                    Deinitialization Function                      |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   // Remove all Fibonacci levels
+   for (int i = 0; i < fibonacciTool.currentLevel; i++)
+   {
+      fibonacciTool.RemoveLevel(i);
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                        Custom Functions                           |
+//+------------------------------------------------------------------+
+// Function to handle hotkey for drawing Fibonacci levels
+void DrawLevels()
+{
+   fibonacciTool.DrawLevels();
+}
+
+// Function to handle hotkey for editing a Fibonacci level
+void EditLevel(int levelIndex, double newLevel)
+{
+   fibonacciTool.EditLevel(levelIndex, newLevel);
+}
+
+// Function to handle hotkey for removing a Fibonacci level
+void RemoveLevel(int levelIndex)
+{
+   fibonacciTool.RemoveLevel(levelIndex);
+}
